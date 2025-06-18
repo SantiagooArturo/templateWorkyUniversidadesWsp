@@ -1,17 +1,19 @@
+import { EmailUniversitarioFlow } from "../EmaiFlows";
 import { addKeyword, EVENTS } from "@builderbot/bot";
-import { ServicesFireBase } from "../../services";
-import { InitFlows } from "../InitFlows";
 
 export const TerminosFlows = addKeyword([EVENTS.ACTION]).addAnswer(
-  `Bienvenido a Worky✨
+  `🎉 *¡Bienvenido a Worky!* ✨
 
-Antes de continuar, revisa los siguientes enlaces:
+¡Nos alegra tenerte aquí! Antes de comenzar tu experiencia con nuestro asistente de búsqueda de empleo, necesitamos que revises y aceptes nuestros términos.
 
-Términos y condiciones: https://www.workin2.com/terminos
+📋 *Documentos importantes:*
+• Términos y condiciones: https://www.workin2.com/terminos
+• Política de privacidad: https://www.workin2.com/privacidad
 
-Privacidad: https://www.workin2.com/privacidad
+🔒 *Tu privacidad es importante para nosotros*
+Al continuar, confirmas que has leído y aceptas nuestros términos y política de privacidad.
 
-Al continuar, aceptas nuestros términos, nuestra política de privacidad.`,
+¿Estás de acuerdo en continuar?`,
   {
     buttons: [
       {
@@ -23,14 +25,9 @@ Al continuar, aceptas nuestros términos, nuestra política de privacidad.`,
     ],
     capture: true,
   },
-  async (ctx, { gotoFlow, fallBack, extensions }) => {
-    const db = extensions.db as ServicesFireBase;
-
+  async (ctx, { gotoFlow, fallBack }) => {
     if (ctx.body.includes("Acepto")) {
-      await db.saveToMemory(ctx.from, {
-        terminos: true,
-      });
-      return gotoFlow(InitFlows);
+      return gotoFlow(EmailUniversitarioFlow);
     }
 
     if (ctx.body.includes("No acepto")) {

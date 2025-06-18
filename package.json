@@ -14,8 +14,11 @@
   "dependencies": {
     "@builderbot/bot": "1.2.9",
     "@builderbot/provider-meta": "1.2.9",
+    "@firebase/app": "^0.13.1",
+    "@firebase/firestore": "^4.7.17",
     "axios": "^1.9.0",
-    "dotenv": "^16.5.0"
+    "dotenv": "^16.5.0",
+    "openai": "^5.5.1"
   },
   "devDependencies": {
     "@types/node": "^20.11.30",
