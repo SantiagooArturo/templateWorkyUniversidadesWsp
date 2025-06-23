@@ -14,10 +14,14 @@ export const analyzeCvForJobs = async (
   worki: any
 ) => {
   try {
-    const res = await worki.analyzeCvEnhanced(
+    /* const res = await worki.analyzeCvEnhanced(
       `${config.URL_BASE_BOT}/cv/${userId}-${fileId}.pdf`,
       puesto,
       userId
+    ); */
+    const res = await worki.saveAndUploadFTP(
+      `${config.URL_BASE_BOT}/cv/${userId}-${fileId}.pdf`,
+      puesto
     );
     return res;
   } catch (error) {

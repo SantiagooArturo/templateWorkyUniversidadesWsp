@@ -5,6 +5,9 @@ import path from "path";
 import { createWriteStream, createReadStream } from "fs";
 import * as fs from "fs";
 import * as fsPromises from "fs/promises";
+import { Client } from 'basic-ftp'; 
+import fsExtra from 'fs-extra'; 
+
 
 // Interfaces para tipado
 interface InterviewQuestion {
@@ -98,7 +101,7 @@ export class ServicesWorki {
         "GET",
         null,
         {},
-        true
+        false
       );
       console.log("Análisis completado exitosamente");
       return result;
@@ -163,6 +166,8 @@ export class ServicesWorki {
       throw new Error(`Error al analizar CV mejorado: ${error.message}`);
     }
   }
+
+  
 
   // Método para análisis asíncrono sin bloquear
   analyzeCvAsync(
@@ -450,4 +455,103 @@ Devuelve tu análisis en formato JSON con las siguientes claves:
       return null;
     }
   }
+
+  async uploadFileToFTP(localFilePath: string, fileName: string): Promise<string> {
+    const client = new Client();
+    
+    try {
+      console.log(`Iniciando subida de archivo via FTP: ${localFilePath}`);
+
+      // Verificar que el archivo existe
+      if (!await fsExtra.pathExists(localFilePath)) {
+        throw new Error(`El archivo no existe: ${localFilePath}`);
+      }
+
+      // Conectar al servidor FTP
+      console.log(`Conectando a servidor FTP: ${process.env.FTP_HOST}`);
+      await client.access({
+        host: process.env.FTP_HOST!,
+        user: process.env.FTP_USER!,
+        password: process.env.FTP_PASSWORD!,
+        port: parseInt(process.env.FTP_PORT || '21'),
+        secure: false
+      });
+
+      // Preparar la ruta de destino
+      const uploadDir = process.env.FTP_UPLOAD_DIR?.endsWith('/') 
+        ? process.env.FTP_UPLOAD_DIR 
+        : `${process.env.FTP_UPLOAD_DIR}/`;
+      
+      // Verificar que estamos en el directorio raíz
+      await client.cd('/');
+      
+      // Obtener directorios que necesitamos crear/verificar
+      const dirParts = uploadDir.split('/').filter(Boolean);
+      
+      // Navegar por cada directorio, creándolo si no existe
+      for (const dir of dirParts) {
+        try {
+          await client.cd(dir);
+        } catch (cdError) {
+          console.log(`Directorio ${dir} no existe, creándolo...`);
+          try {
+            await client.ensureDir(dir);
+            await client.cd(dir);
+          } catch (mkdirError) {
+            console.error(`Error al crear directorio ${dir}: ${mkdirError.message}`);
+            throw new Error(`No se pudo crear el directorio: ${dir}`);
+          }
+        }
+      }
+      
+      console.log(`Directorio de destino verificado: ${await client.pwd()}`);
+      
+      // Subir el archivo
+      console.log(`Subiendo archivo a: ${fileName}`);
+      await client.uploadFrom(localFilePath, fileName);
+      
+      // Generar la URL pública
+      const publicUrl = `${process.env.PDF_PUBLIC_URL}${fileName}`;
+      console.log(`Archivo subido correctamente. URL pública: ${publicUrl}`);
+      
+      return publicUrl;
+    } catch (error) {
+      console.error(`Error al subir archivo por FTP: ${error.message}`);
+      throw error;
+    } finally {
+      client.close();
+      console.log('Conexión FTP cerrada');
+    }
+  }
+  
+  async saveAndUploadFTP(
+    pdfUrl: string,
+    puestoPostular: string
+  ): Promise<CvAnalysisResult> {
+    // 1. Descargar el PDF desde la URL
+    //const response = await axios.get(pdfUrl, { responseType: 'arraybuffer' });
+    const response = await axios.get(pdfUrl, {
+      responseType: 'arraybuffer',
+      headers: {
+        Authorization: `Bearer ${config.META_JWT_TOKEN}`,
+      },
+    });
+    const fileName = `cv_${Date.now()}.pdf`;
+    const tempPath = `./temp/${fileName}`;
+    await fsExtra.ensureDir('./temp');
+    await fsExtra.writeFile(tempPath, response.data);
+
+    // 2. Subir el PDF por FTP y obtener el enlace público usando la variable de entorno
+    const publicUrl = await this.uploadFileToFTP(tempPath, fileName);
+
+    // 3. Limpiar el archivo temporal
+    await fsExtra.remove(tempPath);
+
+    // 4. Analizar el CV usando el enlace público
+    const result = await this.analyzeCv(publicUrl, puestoPostular);
+
+    return result;
+  }
+
+
 }

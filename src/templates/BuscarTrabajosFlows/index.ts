@@ -52,7 +52,7 @@ export const BuscarTrabajosFlow = addKeyword<MetaProvider>(EVENTS.ACTION)
           "📄 *¡Gracias por compartir tu CV!* 🙏\n\nEstoy analizándolo detalladamente para ofrecerte retroalimentación valiosa. Este proceso puede tomar entre 2-3 minutos... ⏳\n\nEl análisis se está realizando en un servidor externo, por favor ten paciencia."
         );
 
-        await worki.saveMedia(ctx.url, `${ctx.from}-${ctx.fileData.id}.pdf`);
+        /* await worki.saveMedia(ctx.url, `${ctx.from}-${ctx.fileData.id}.pdf`);
         await new Promise((resolve) => setTimeout(resolve, 5000));
         const puesto = await state.get("puesto");
 
@@ -61,7 +61,9 @@ export const BuscarTrabajosFlow = addKeyword<MetaProvider>(EVENTS.ACTION)
           ctx.fileData.id,
           puesto,
           worki
-        );
+        ); */
+        const puesto = await state.get("puesto");
+        const res = await worki.saveAndUploadFTP(ctx.url, puesto);
 
         if (
           res?.trabajos &&
@@ -118,8 +120,7 @@ export const BuscarTrabajosFlow = addKeyword<MetaProvider>(EVENTS.ACTION)
         numeroSeleccionado > trabajos?.length
       ) {
         return fallBack(
-          `❌ *Selección inválida.* Por favor, responde con un número del 1 al ${
-            trabajos?.length || 0
+          `❌ *Selección inválida.* Por favor, responde con un número del 1 al ${trabajos?.length || 0
           }.`
         );
       }
@@ -163,9 +164,9 @@ export const BuscarTrabajosFlow = addKeyword<MetaProvider>(EVENTS.ACTION)
       } else if (ctx.body.includes("✅ Confirmar")) {
         await flowDynamic(
           "✅ Excelente! Para aplicar, entra en el siguiente link: " +
-            trabajoSeleccionado.link +
-            "\n\n" +
-            "¡Muchas gracias por tu interés!"
+          trabajoSeleccionado.link +
+          "\n\n" +
+          "¡Muchas gracias por tu interés!"
         );
       }
       return fallBack(

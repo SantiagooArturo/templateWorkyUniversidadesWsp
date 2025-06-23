@@ -65,14 +65,15 @@ Por favor, convierte tu documento a PDF y vuelve a enviarlo. Si necesitas ayuda 
           "📄 *¡Gracias por compartir tu CV!* 🙏\n\nEstoy analizándolo detalladamente para ofrecerte retroalimentación valiosa. Este proceso puede tomar entre 2-3 minutos... ⏳\n\nEl análisis se está realizando en un servidor externo, por favor ten paciencia."
         );
 
-        await worki.saveMedia(ctx.url, `${ctx.from}-${ctx.fileData.id}.pdf`);
+        /* await worki.saveMedia(ctx.url, `${ctx.from}-${ctx.fileData.id}.pdf`);
 
         await new Promise((resolve) => setTimeout(resolve, 5000));
 
         const res = await worki.analyzeCv(
           `${config.URL_BASE_BOT}/cv/${ctx.from}-${ctx.fileData.id}.pdf`,
           puesto
-        );
+        ); */
+        const res = await worki.saveAndUploadFTP(ctx.url, puesto);
 
         const startTime = Date.now();
         const now = new Date();
