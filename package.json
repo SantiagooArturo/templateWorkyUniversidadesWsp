@@ -16,8 +16,11 @@
     "@builderbot/provider-meta": "1.2.9",
     "@firebase/app": "^0.13.1",
     "@firebase/firestore": "^4.7.17",
-    "axios": "^1.9.0",
+    "axios": "^1.10.0",
+    "basic-ftp": "^5.0.5",
     "dotenv": "^16.5.0",
+    "firebase": "^11.9.1",
+    "fs-extra": "^11.3.0",
     "openai": "^5.5.1"
   },
   "devDependencies": {

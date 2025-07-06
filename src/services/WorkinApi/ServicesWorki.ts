@@ -87,11 +87,12 @@ export class ServicesWorki {
 
   async analyzeCv(
     pdfUrl: string,
-    puestoPostular: string
+    puestoPostular: string,
+    originalName?: string
   ): Promise<CvAnalysisResult> {
     try {
       const formattedPuesto = puestoPostular.replace(/\s+/g, "_");
-      const endpoint = `/analizar-cv?pdf_url=${pdfUrl}&puesto_postular=${formattedPuesto}`;
+      const endpoint = `/analizar-cv/?pdf_url=${pdfUrl}&puesto_postular=${formattedPuesto}&original_name=${originalName}`;
 
       console.log("Iniciando análisis de CV...");
       console.log("Endpoint:", endpoint);
@@ -176,7 +177,7 @@ export class ServicesWorki {
   ): Promise<CvAnalysisResult> {
     return new Promise((resolve, reject) => {
       // Ejecutar el análisis en background
-      this.analyzeCv(pdfUrl, puestoPostular)
+      this.analyzeCv(pdfUrl, puestoPostular, undefined)
         .then((result) => {
           console.log("Análisis asíncrono completado");
           resolve(result);
@@ -526,7 +527,8 @@ Devuelve tu análisis en formato JSON con las siguientes claves:
   
   async saveAndUploadFTP(
     pdfUrl: string,
-    puestoPostular: string
+    puestoPostular: string,
+    originalName?: string
   ): Promise<CvAnalysisResult> {
     // 1. Descargar el PDF desde la URL
     //const response = await axios.get(pdfUrl, { responseType: 'arraybuffer' });
@@ -548,7 +550,7 @@ Devuelve tu análisis en formato JSON con las siguientes claves:
     await fsExtra.remove(tempPath);
 
     // 4. Analizar el CV usando el enlace público
-    const result = await this.analyzeCv(publicUrl, puestoPostular);
+    const result = await this.analyzeCv(publicUrl, puestoPostular, originalName);
 
     return result;
   }

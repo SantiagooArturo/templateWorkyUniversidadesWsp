@@ -1,3 +1,4 @@
+import { MetaProvider } from "@builderbot/provider-meta";
 import config from "~/config";
 
 /**
@@ -15,12 +16,12 @@ export const analyzeCvForJobs = async (
 ) => {
   try {
     /* const res = await worki.analyzeCvEnhanced(
-      `${config.URL_BASE_BOT}/cv/${userId}-${fileId}.pdf`,
+      `${config.URL_BASE_BOT}cv/${userId}-${fileId}.pdf`,
       puesto,
       userId
     ); */
     const res = await worki.saveAndUploadFTP(
-      `${config.URL_BASE_BOT}/cv/${userId}-${fileId}.pdf`,
+      `${config.URL_BASE_BOT}cv/${userId}-${fileId}.pdf`,
       puesto
     );
     return res;
@@ -57,11 +58,12 @@ export const formatSingleJob = (trabajo: any, index: number) => {
   const porcentaje = trabajo.porcentaje || "Sin porcentaje";
 
   return (
-    `🔹 *Trabajo ${index + 1}*\n` +
+    `🔹 *Practica ${index + 1}*\n` +
     `📋 *Título:* ${title}\n` +
     `🏢 *Empresa:* ${company}\n` +
     `📍 *Ubicación:* ${location}\n` +
-    `🎯 *Match:* ${porcentaje}`
+    `🎯 *Match:* ${porcentaje}\n` +
+    `🔗 *Postula:* ${trabajo.link}`
   );
 };
 
@@ -85,6 +87,16 @@ export const sendJobsOneByOne = async (
       await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
+  
+  // Después de mostrar todos los trabajos, enviar mensaje con botón de regresar
+  await flowDynamic({
+    body: "✅ *Búsqueda completada*\n\nHas visto todas las oportunidades disponibles. ¿Te gustaría buscar más trabajos o regresar al menú principal?",
+    buttons: [
+      {
+        body: "🔙 Regresar al menú",
+      },
+    ],
+  });
 };
 
 /**
@@ -93,7 +105,10 @@ export const sendJobsOneByOne = async (
  * @returns Array formateado para sendListComplete
  */
 export const formatJobsForWhatsApp = (trabajos: any[]) => {
-  return trabajos.map((trabajo, index) => {
+  const cleanJobs = trabajos.map((trabajo, index) => {
+    const cleanTitle = String(trabajo.title)
+      .replace(/[\n\r]/g, " ")
+      .trim();
     const cleanCompany = String(trabajo.company)
       .replace(/[\n\r]/g, " ")
       .trim();
@@ -102,9 +117,77 @@ export const formatJobsForWhatsApp = (trabajos: any[]) => {
       .trim();
 
     return {
-      id: `trabajo_${index + 1}`.substring(0, 200),
+      id: `trabajo_${index + 1}`,
       title: cleanCompany.substring(0, 24),
-      description: `📍 ${cleanLocation}`.substring(0, 72),
+      description: `${cleanTitle.substring(0, 40)} | 📍 ${cleanLocation.substring(0, 30)}`,
     };
   });
+
+  return {
+    header: {
+      type: "text",
+      text: "Practicas que hicieron match contigo",
+    },
+    body: {
+      text: `Encontré ${trabajos.length} oportunidades que coinciden con tu perfil. Selecciona una para ver más detalles:`,
+    },
+    footer: {
+      text: "Selecciona una practica para ver mas detalles",
+    },
+    action: {
+      button: "Practicas",
+      sections: [
+        {
+          title: "Practicas",
+          rows: cleanJobs,
+        },
+      ],
+    },
+  };
+};
+
+
+/**
+ * Envía una lista interactiva de trabajos usando provider.sendList
+ * @param provider - Instancia del provider
+ * @param to - Número de WhatsApp destino
+ * @param trabajos - Array de trabajos válidos
+ */
+export const sendInteractiveJobsList = async (provider: MetaProvider, to: string, trabajos: any[]) => {
+  const cleanJobs = trabajos.map((trabajo, index) => {
+    const cleanTitle = String(trabajo.title || trabajo.description || "Sin título").replace(/[\n\r]/g, " ").trim();
+    const cleanCompany = String(trabajo.company || "Sin empresa").replace(/[\n\r]/g, " ").trim();
+    const cleanLocation = String(trabajo.location || "Sin ubicación").replace(/[\n\r]/g, " ").trim();
+    const porcentaje = trabajo.porcentaje ? ` | 🎯 ${trabajo.porcentaje}` : "";
+    
+    return {
+      id: `trabajo_${index + 1}`,
+      title: cleanCompany.substring(0, 24),
+      description: `${cleanTitle.substring(0, 30)} | 📍 ${cleanLocation.substring(0, 20)}${porcentaje}`,
+    };
+  });
+
+  const listButtons = {
+    header: {
+      type: "text",
+      text: "🎯 Oportunidades encontradas",
+    },
+    body: {
+      text: `He encontrado ${trabajos.length} trabajos que coinciden con tu perfil y CV. Selecciona uno para ver el enlace de postulación.`,
+    },
+    footer: {
+      text: "Elige una opción para continuar",
+    },
+    action: {
+      button: "Ver Trabajos",
+      sections: [
+        {
+          title: "Trabajos Disponibles",
+          rows: cleanJobs,
+        },
+      ],
+    },
+  };
+  
+  await provider.sendList(to, listButtons);
 };

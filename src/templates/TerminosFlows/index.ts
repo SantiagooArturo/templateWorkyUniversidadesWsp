@@ -26,6 +26,7 @@ Al continuar, confirmas que has leído y aceptas nuestros términos y política 
     capture: true,
   },
   async (ctx, { gotoFlow, fallBack }) => {
+
     if (ctx.body.includes("Acepto")) {
       return gotoFlow(EmailUniversitarioFlow);
     }

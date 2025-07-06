@@ -12,9 +12,6 @@ import {
   where,
   getDocs,
   serverTimestamp,
-  DocumentData,
-  QuerySnapshot,
-  Timestamp,
   FieldValue,
 } from "@firebase/firestore";
 
@@ -97,8 +94,9 @@ interface User {
   lastInterviewActivity: FirebaseTimestamp | FieldValue | null;
   updatedAt: FirebaseTimestamp | FieldValue;
   interviewHistory: InterviewHistoryItem[];
-  terminos: boolean; // Nuevo campo para términos y condiciones
+  terminos: boolean; // Términos y condiciones aceptados
   email?: string;
+  credits?: number;
 }
 
 interface CVAnalysis {
@@ -176,6 +174,7 @@ export class ServicesFireBase {
         interviewHistory: userData.interviewHistory || [],
         terminos: userData.terminos || false,
         email: userData.email || "",
+        credits : userData.credits || 1, // Inicializar con 1 crédito
       };
 
       await setDoc(userRef, newUser);
@@ -331,4 +330,6 @@ export class ServicesFireBase {
       throw error;
     }
   }
+
+  
 }

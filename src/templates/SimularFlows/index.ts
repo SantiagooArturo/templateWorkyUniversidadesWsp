@@ -2,6 +2,7 @@ import { processResponseAndGenerateQuestion } from "./utils";
 import { MESSAGES, QUESTION_PROMPTS } from "./constants";
 import { addKeyword, EVENTS } from "@builderbot/bot";
 import { ServicesWorki } from "~/services";
+import { InitFlows } from "../InitFlows";
 
 export const SimularFlows = addKeyword(EVENTS.ACTION)
   .addAnswer(
@@ -10,15 +11,13 @@ export const SimularFlows = addKeyword(EVENTS.ACTION)
       capture: true,
       buttons: [
         {
-          body: "❌ Cancelar",
+          body: "🔙 Regresar",
         },
       ],
     },
-    async (ctx, { state, flowDynamic, endFlow }) => {
-      if (ctx.body.includes("❌ Cancelar")) {
-        return endFlow(
-          `❌ *Simulación cancelada*\n\nHas cancelado la simulación de entrevista. Si cambias de opinión, puedes volver a intentarlo desde el menú principal.\n\n¡Estoy aquí cuando me necesites! 👋`
-        );
+    async (ctx, { state, flowDynamic, endFlow, gotoFlow }) => {
+      if (ctx.body.includes("🔙 Regresar")) {
+        return gotoFlow(InitFlows);
       }
       
       await state.update({ puesto: ctx.body });
@@ -63,9 +62,10 @@ export const SimularFlows = addKeyword(EVENTS.ACTION)
       ]);
     }
   )
+  // ✅ PREGUNTA 1
   .addAction(
     { capture: true },
-    async (ctx, { state, flowDynamic, extensions }) => {
+    async (ctx, { state, flowDynamic, extensions, fallBack, gotoFlow }) => {
       const worki = extensions.worki as ServicesWorki;
       const puesto = await state.get("puesto");
 
@@ -73,6 +73,7 @@ export const SimularFlows = addKeyword(EVENTS.ACTION)
         ctx,
         state,
         flowDynamic,
+        gotoFlow,
         worki,
         1,
         "response1",
@@ -80,13 +81,49 @@ export const SimularFlows = addKeyword(EVENTS.ACTION)
         "question2",
         QUESTION_PROMPTS.SKILLS(puesto),
         false,
-        extensions
+        extensions,
+        fallBack
       );
     }
   )
+  // ✅ CONFIRMACIÓN PREGUNTA 1 → 2
   .addAction(
     { capture: true },
-    async (ctx, { state, flowDynamic, extensions }) => {
+    async (ctx, { state, flowDynamic, extensions, fallBack }) => {
+      if (ctx.body.includes("⏹️ Detener")) {
+        return await flowDynamic(
+          [{ body: MESSAGES.STOPPED_BY_USER, buttons: [{ body: "🔙 Ir a menù" }] }]
+        );
+      }
+      
+      if (!ctx.body.includes("✅ Sí, continuar")) {
+        return fallBack("❌ *Respuesta no válida*\n\nPor favor, selecciona una de las opciones: ✅ Sí, continuar o ⏹️ Detener");
+      }
+
+      // Generar pregunta 2
+      const worki = extensions.worki as ServicesWorki;
+      const puesto = await state.get("puesto");
+      const response = await worki.generateInterviewQuestion(
+        puesto,
+        QUESTION_PROMPTS.SKILLS(puesto)
+      );
+
+      await state.update({ question2: response.question });
+
+      return await flowDynamic([
+        {
+          body:
+            MESSAGES.QUESTION_HEADER(2) +
+            response.question +
+            MESSAGES.AUDIO_INSTRUCTION,
+        },
+      ]);
+    }
+  )
+  // ✅ PREGUNTA 2
+  .addAction(
+    { capture: true },
+    async (ctx, { state, flowDynamic, extensions, fallBack, gotoFlow }) => {
       const worki = extensions.worki as ServicesWorki;
       const puesto = await state.get("puesto");
 
@@ -94,6 +131,7 @@ export const SimularFlows = addKeyword(EVENTS.ACTION)
         ctx,
         state,
         flowDynamic,
+        gotoFlow,
         worki,
         2,
         "response2",
@@ -101,13 +139,49 @@ export const SimularFlows = addKeyword(EVENTS.ACTION)
         "question3",
         QUESTION_PROMPTS.TEAMWORK(puesto),
         false,
-        extensions
+        extensions,
+        fallBack
       );
     }
   )
+  // ✅ CONFIRMACIÓN PREGUNTA 2 → 3
   .addAction(
     { capture: true },
-    async (ctx, { state, flowDynamic, extensions }) => {
+    async (ctx, { state, flowDynamic, extensions, endFlow, fallBack }) => {
+      if (ctx.body.includes("⏹️ Detener")) {
+        return await flowDynamic(
+          [{ body: MESSAGES.STOPPED_BY_USER, buttons: [{ body: "🔙 Ir a menù" }] }]
+        );
+      }
+      
+      if (!ctx.body.includes("✅ Sí, continuar")) {
+        return fallBack("❌ *Respuesta no válida*\n\nPor favor, selecciona una de las opciones: ✅ Sí, continuar o ⏹️ Detener");
+      }
+
+      // Generar pregunta 3
+      const worki = extensions.worki as ServicesWorki;
+      const puesto = await state.get("puesto");
+      const response = await worki.generateInterviewQuestion(
+        puesto,
+        QUESTION_PROMPTS.TEAMWORK(puesto)
+      );
+
+      await state.update({ question3: response.question });
+
+      return await flowDynamic([
+        {
+          body:
+            MESSAGES.QUESTION_HEADER(3) +
+            response.question +
+            MESSAGES.AUDIO_INSTRUCTION,
+        },
+      ]);
+    }
+  )
+  // ✅ PREGUNTA 3
+  .addAction(
+    { capture: true },
+    async (ctx, { state, flowDynamic, extensions, fallBack, gotoFlow }) => {
       const worki = extensions.worki as ServicesWorki;
       const puesto = await state.get("puesto");
 
@@ -115,6 +189,7 @@ export const SimularFlows = addKeyword(EVENTS.ACTION)
         ctx,
         state,
         flowDynamic,
+        gotoFlow,
         worki,
         3,
         "response3",
@@ -122,27 +197,65 @@ export const SimularFlows = addKeyword(EVENTS.ACTION)
         "question4",
         QUESTION_PROMPTS.PROBLEM_SOLVING(puesto),
         false,
-        extensions
+        extensions,
+        fallBack
       );
     }
   )
+  // ✅ CONFIRMACIÓN PREGUNTA 3 → 4
   .addAction(
     { capture: true },
-    async (ctx, { state, flowDynamic, extensions }) => {
+    async (ctx, { state, flowDynamic, extensions, fallBack }) => {
+      if (ctx.body.includes("⏹️ Detener")) {
+        return await flowDynamic(
+          [{ body: MESSAGES.STOPPED_BY_USER, buttons: [{ body: "🔙 Ir a menù" }] }]
+        );
+      }
+      
+      if (!ctx.body.includes("✅ Sí, continuar")) {
+        return fallBack("❌ *Respuesta no válida*\n\nPor favor, selecciona una de las opciones: ✅ Sí, continuar o ⏹️ Detener");
+      }
+
+      // Generar pregunta 4 (última)
+      const worki = extensions.worki as ServicesWorki;
+      const puesto = await state.get("puesto");
+      const response = await worki.generateInterviewQuestion(
+        puesto,
+        QUESTION_PROMPTS.PROBLEM_SOLVING(puesto)
+      );
+
+      await state.update({ question4: response.question });
+
+      return await flowDynamic([
+        {
+          body:
+            MESSAGES.QUESTION_HEADER(4) +
+            response.question +
+            MESSAGES.AUDIO_INSTRUCTION,
+        },
+      ]);
+    }
+  )
+  // ✅ PREGUNTA 4 (ÚLTIMA)
+  .addAction(
+    { capture: true },
+    async (ctx, { state, flowDynamic, extensions, fallBack, gotoFlow }) => {
       const worki = extensions.worki as ServicesWorki;
 
       return await processResponseAndGenerateQuestion(
         ctx,
         state,
         flowDynamic,
+        gotoFlow,
         worki,
         4,
         "response4",
         "question4",
         "",
         "",
-        true,
-        extensions
+        true, // ✅ Es la última pregunta
+        extensions,
+        fallBack
       );
     }
   );

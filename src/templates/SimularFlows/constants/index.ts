@@ -16,11 +16,20 @@ const MESSAGES = {
   VALIDATION_ERROR:
     '❌ *Respuesta no válida*\n\nPor favor, selecciona una de las opciones disponibles: "Sí" o "No".',
 
+  CONFIRMATION_NEXT_QUESTION: (questionNum: number) =>
+    `🎯 *Progreso de entrevista - Pregunta ${questionNum} completada*\n\n¿Quieres continuar con la siguiente pregunta? 🤔`,
+
+  AUDIO_VIDEO_REQUIRED:
+    "❌ *Solo se aceptan respuestas de audio o video*\n\n🎙️ Para simular una entrevista real, necesito que respondas con:\n\n🎤 *Mensaje de audio* (grabando tu voz)\n📹 *Mensaje de video* (grabándote mientras respondes)\n\n💡 *Tip: Habla claro y con confianza, como si fuera una entrevista real.*\n\n🔄 *Por favor, envía tu respuesta nuevamente en audio o video.*",
+
   CANCELLED:
     "❌ *Simulación cancelada*\n\nHas decidido no continuar con la simulación. Recuerda que practicar entrevistas te ayuda a mejorar tus oportunidades laborales.\n\n¡Estoy aquí cuando quieras intentarlo de nuevo! 👋",
 
+  STOPPED_BY_USER:
+    "⏹️ *Entrevista detenida por el usuario*\n\n¡Gracias por practicar conmigo! Has completado las preguntas hasta este punto.\n\n💡 *Recuerda:* Puedes volver a iniciar una simulación completa cuando quieras seguir practicando.\n\n🚀 *¡Cada práctica te acerca más a conseguir ese trabajo que deseas!*",
+
   FINAL_MESSAGE:
-    "🎉 *¡Felicitaciones! Simulación completada exitosamente*\n\n✅ *Has terminado las 4 preguntas*\n📊 *Revisa toda la retroalimentación* que recibiste\n💪 *Aplica los consejos* en tus próximas entrevistas\n\n🚀 *¡Estás más preparado para conseguir ese trabajo que deseas!*\n\n💡 *Tip: Puedes repetir la simulación cuando quieras para seguir mejorando.*",
+    "🎉 *¡FELICIDADES!* \nHas completado todas las preguntas de la entrevista. ¡Excelente trabajo! 👏\n✨ Espero que el feedback te haya sido útil para mejorar tus habilidades en entrevistas.",
 };
 
 // Prompts para generar preguntas

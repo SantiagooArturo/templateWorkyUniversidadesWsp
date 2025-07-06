@@ -65,7 +65,43 @@ const main = async () => {
     }
   });
 
-  // Audio file serving endpoint
+  // Endpoint para servir videos
+  provider.server.get("/videos/:filename", (req, res) => {
+    const { filename } = req.params;
+    const filePath = path.join(__dirname, "..", "videos", filename);
+
+    if (!fs.existsSync(filePath)) {
+      res.statusCode = 404;
+      res.end("Video not found");
+      return;
+    }
+
+    try {
+      const fileContent = fs.readFileSync(filePath);
+      const ext = path.extname(filename).toLowerCase();
+
+      const mimeTypes = {
+        ".mp4": "video/mp4",
+        ".mov": "video/quicktime",
+        ".avi": "video/x-msvideo",
+      };
+
+      const contentType = mimeTypes[ext] || "video/mp4";
+
+      res.setHeader("Content-Type", contentType);
+      res.setHeader("Content-Disposition", `inline; filename="${filename}"`);
+      res.setHeader("Content-Length", fileContent.length);
+      res.setHeader("Accept-Ranges", "bytes");
+
+      res.end(fileContent);
+    } catch (error) {
+      console.error("Error reading video file:", error);
+      res.statusCode = 500;
+      res.end("Internal Server Error");
+    }
+  });
+
+  // Audio file serving endpoint (solo para audios generales, no entrevistas)
   provider.server.get("/audios/:filename", (req, res) => {
     const { filename } = req.params;
 

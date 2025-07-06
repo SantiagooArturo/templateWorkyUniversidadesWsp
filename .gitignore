@@ -10,6 +10,7 @@ pnpm-lock.yaml
 pnpm-workspace.yaml
 package-lock.json
 
+
 yarn.lock
 
 # Environment variables
@@ -117,3 +118,7 @@ temp/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+/docs
+/.github/copilot-instructions.md
+workyb2c-firebase-adminsdk-fbsvc-27104810af.json
